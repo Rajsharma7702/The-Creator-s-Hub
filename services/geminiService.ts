@@ -32,10 +32,8 @@ let chatSession: Chat | null = null;
 const getAI = (): GoogleGenAI => {
   if (!ai) {
     // Fallback to empty string to avoid crash, but warn in console
+    // Vite replaces process.env.API_KEY with the actual string during build
     const apiKey = process.env.API_KEY || ""; 
-    if (!apiKey) {
-      console.warn("Gemini API Key is missing. Chatbot will not function correctly.");
-    }
     ai = new GoogleGenAI({ apiKey });
   }
   return ai;
@@ -55,12 +53,18 @@ export const getChatSession = (): Chat => {
 };
 
 export const sendMessageToGemini = async (message: string): Promise<string> => {
+  // CRITICAL: Check if API Key exists before attempting request
+  const apiKey = process.env.API_KEY;
+  if (!apiKey || apiKey.length < 5) {
+    return "⚠️ Configuration Error: API Key is missing.\n\nPlease go to your Netlify Dashboard > Site Settings > Environment Variables and add a variable named 'API_KEY' with your Google Gemini API key, then redeploy the site.";
+  }
+
   try {
     const chat = getChatSession();
     const result: GenerateContentResponse = await chat.sendMessage({ message });
     return result.text || "I'm feeling a bit quiet right now. Let's create something later!";
   } catch (error) {
     console.error("Gemini Error:", error);
-    return "I encountered a creative block (network error or missing API key). Please try again later.";
+    return "I encountered a creative block (network error or invalid API key). Please check your internet connection or verify the API key in Netlify settings.";
   }
 };

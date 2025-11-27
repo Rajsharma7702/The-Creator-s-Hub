@@ -50,6 +50,11 @@ const App: React.FC = () => {
     setSubmissions((prev) => [submission, ...prev]);
   };
 
+  // Log version for debugging deployment
+  useEffect(() => {
+    console.log("The Creator's Hub - Version 2.1 (Netlify Build Fix)");
+  }, []);
+
   // AI Welcome Message Logic
   useEffect(() => {
     const handleWelcomeSpeech = () => {
