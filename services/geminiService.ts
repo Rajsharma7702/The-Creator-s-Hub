@@ -2,8 +2,9 @@ import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
 // Initialize Gemini
 // NOTE: In a real production app, API calls should go through a backend to protect the key.
-// For this client-side demo, we rely on the environment variable injection.
+// For this client-side demo, we rely on the environment variable injection via Vite.
 
+// Vite replaces 'process.env.API_KEY' with the actual string during build.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `
