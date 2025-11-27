@@ -17,12 +17,19 @@ const Navbar: React.FC = () => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  const playClickSound = () => {
+    // Using a crisp "pop" click sound
+    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3");
+    audio.volume = 0.8;
+    audio.play().catch(err => console.error("Audio play failed", err));
+  };
+
   return (
     <nav className="fixed w-full z-50 bg-brand-dark/90 backdrop-blur-md border-b border-white/10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div className="flex-shrink-0">
-            <Link to="/" className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3" onClick={playClickSound}>
               <img 
                 src={logoUrl} 
                 alt="The Creator's Hub Logo" 
@@ -41,6 +48,7 @@ const Navbar: React.FC = () => {
                   <Link
                     key={link.name}
                     to={link.path}
+                    onClick={playClickSound}
                     className="px-6 py-2.5 rounded-full bg-brand-accent text-white font-medium text-sm transition-all duration-300 hover:bg-indigo-500 hover:shadow-[0_0_20px_rgba(99,102,241,0.5)] hover:-translate-y-1 active:scale-95"
                   >
                     {link.name}
@@ -49,8 +57,11 @@ const Navbar: React.FC = () => {
                   <Link
                     key={link.name}
                     to={link.path}
-                    className={`relative px-1 py-2 text-sm font-medium transition-colors duration-300 group ${
-                      isActive(link.path) ? 'text-white' : 'text-slate-300 hover:text-white'
+                    onClick={playClickSound}
+                    className={`relative px-1 py-2 text-sm font-medium transition-all duration-300 group hover:text-brand-accent hover:drop-shadow-[0_0_8px_rgba(99,102,241,0.5)] ${
+                      isActive(link.path) 
+                        ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' 
+                        : 'text-slate-300'
                     }`}
                   >
                     {link.name}
@@ -60,18 +71,15 @@ const Navbar: React.FC = () => {
                   </Link>
                 )
               ))}
-              <Link
-                to="/admin"
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-500 hover:text-gray-300 transition-colors hover:bg-white/5"
-              >
-                Admin
-              </Link>
             </div>
           </div>
 
           <div className="-mr-2 flex md:hidden">
             <button
-              onClick={() => setIsOpen(!isOpen)}
+              onClick={() => {
+                setIsOpen(!isOpen);
+                playClickSound();
+              }}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-white/10 focus:outline-none transition-colors"
             >
               {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -88,25 +96,21 @@ const Navbar: React.FC = () => {
               <Link
                 key={link.name}
                 to={link.path}
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  playClickSound();
+                }}
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-all duration-200 ${
                   link.isButton
                     ? 'bg-brand-accent text-white text-center mt-4 hover:bg-indigo-500 shadow-lg shadow-brand-accent/20' 
                     : isActive(link.path)
                       ? 'text-brand-accent bg-white/5'
-                      : 'text-gray-300 hover:text-white hover:bg-white/5 hover:translate-x-2'
+                      : 'text-gray-300 hover:text-white hover:bg-brand-accent/10 hover:translate-x-2'
                 }`}
               >
                 {link.name}
               </Link>
             ))}
-            <Link
-              to="/admin"
-              onClick={() => setIsOpen(false)}
-              className="block px-3 py-2 rounded-md text-base font-medium text-gray-500 hover:text-gray-300 hover:bg-white/5"
-            >
-              Admin Panel
-            </Link>
           </div>
         </div>
       )}

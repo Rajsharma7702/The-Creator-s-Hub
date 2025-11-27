@@ -1,15 +1,28 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const Hero: React.FC = () => {
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  // PERFORMANCE OPTIMIZATION: 
+  // Instead of using useState which triggers a full component re-render on every mouse pixel movement,
+  // we use useRef to directly manipulate the DOM elements. This is significantly faster/smoother.
+  const blob1Ref = useRef<HTMLDivElement>(null);
+  const blob2Ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePosition({
-        x: e.clientX,
-        y: e.clientY,
+      // Use requestAnimationFrame to sync with the browser's refresh rate
+      requestAnimationFrame(() => {
+        const { innerWidth, innerHeight } = window;
+        const xOffset = (e.clientX / innerWidth - 0.5) * 40;
+        const yOffset = (e.clientY / innerHeight - 0.5) * 40;
+
+        if (blob1Ref.current) {
+          blob1Ref.current.style.transform = `translate(${-xOffset * 2}px, ${-yOffset * 2}px)`;
+        }
+        if (blob2Ref.current) {
+          blob2Ref.current.style.transform = `translate(${xOffset * 1.5}px, ${yOffset * 1.5}px)`;
+        }
       });
     };
 
@@ -19,22 +32,16 @@ const Hero: React.FC = () => {
     };
   }, []);
 
-  // Calculate parallax offsets
-  // We divide by window dimensions to get a relative value (-0.5 to 0.5)
-  // then multiply by a factor (e.g., 20px or 40px) to determine movement range.
-  const xOffset = (typeof window !== 'undefined') ? (mousePosition.x / window.innerWidth - 0.5) * 40 : 0;
-  const yOffset = (typeof window !== 'undefined') ? (mousePosition.y / window.innerHeight - 0.5) * 40 : 0;
-
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Dynamic Background gradients with Parallax */}
+      {/* Dynamic Background gradients with Parallax - Optimized with Refs */}
       <div 
+        ref={blob1Ref}
         className="absolute top-0 left-1/4 w-96 h-96 bg-brand-accent/20 rounded-full blur-[128px] pointer-events-none transition-transform duration-100 ease-out will-change-transform"
-        style={{ transform: `translate(${-xOffset * 2}px, ${-yOffset * 2}px)` }}
       />
       <div 
+        ref={blob2Ref}
         className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[128px] pointer-events-none transition-transform duration-100 ease-out will-change-transform"
-        style={{ transform: `translate(${xOffset * 1.5}px, ${yOffset * 1.5}px)` }}
       />
 
       {/* Floating accent elements */}

@@ -44,8 +44,8 @@ const Testimonials: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {testimonials.map((testimonial) => (
-            <div key={testimonial.id} className="bg-slate-800/40 backdrop-blur-sm border border-white/5 rounded-2xl p-8 hover:border-brand-accent/30 transition-colors relative group flex flex-col h-full">
-              <Quote className="h-8 w-8 text-brand-accent mb-6 opacity-50 group-hover:opacity-100 transition-opacity" />
+            <div key={testimonial.id} className="bg-slate-800/40 backdrop-blur-sm border border-white/5 rounded-2xl p-8 transition-all duration-300 relative group flex flex-col h-full hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-accent/10 hover:border-brand-accent/30 hover:bg-slate-800/60">
+              <Quote className="h-8 w-8 text-brand-accent mb-6 opacity-50 group-hover:opacity-100 transition-opacity duration-300" />
               <p className="text-slate-300 italic mb-6 leading-relaxed flex-grow">
                 "{testimonial.quote}"
               </p>

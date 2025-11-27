@@ -13,7 +13,8 @@ const creators: Creator[] = [
     id: '2',
     name: 'Nishikant',
     category: 'Dance',
-    workImage: 'https://images.unsplash.com/photo-1547153760-18fc86324498?auto=format&fit=crop&q=80&w=400',
+    // Reliable dynamic male dancer image
+    workImage: 'https://images.unsplash.com/photo-1504609773096-104ff2c73ba4?auto=format&fit=crop&q=80&w=400',
     description: 'A contemporary dancer whose viral reel captured the raw emotion of street dance.'
   },
   {
@@ -27,6 +28,7 @@ const creators: Creator[] = [
     id: '4',
     name: 'Kanishka',
     category: 'Art',
+    // Reliable abstract artwork image
     workImage: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?auto=format&fit=crop&q=80&w=400',
     description: 'Showcasing her breathtaking artwork that effortlessly blends vivid imagination with intricate techniques to create visual magic.'
   }
@@ -47,6 +49,7 @@ const Featured: React.FC = () => {
                 <img 
                   src={creator.workImage} 
                   alt={creator.name} 
+                  loading="lazy"
                   className="w-full h-64 object-cover transform group-hover:scale-110 transition-transform duration-700"
                 />
               </div>

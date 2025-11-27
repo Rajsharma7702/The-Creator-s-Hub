@@ -10,8 +10,14 @@ const Footer: React.FC = () => {
     { name: 'About Us', path: '/about' },
     { name: 'Featured Creators', path: '/featured' },
     { name: 'Join the Movement', path: '/submit' },
-    { name: 'Admin Portal', path: '/admin' },
   ];
+
+  const playClickSound = () => {
+    // Using a crisp "pop" click sound
+    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3");
+    audio.volume = 0.8;
+    audio.play().catch(err => console.error("Audio play failed", err));
+  };
 
   return (
     <footer className="bg-black py-12 border-t border-white/10">
@@ -19,7 +25,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
           {/* Brand Column */}
           <div className="space-y-4">
-            <Link to="/" className="flex items-center gap-3">
+            <Link to="/" className="flex items-center gap-3" onClick={playClickSound}>
               <img 
                 src={logoUrl} 
                 alt="The Creator's Hub Logo" 
@@ -42,6 +48,7 @@ const Footer: React.FC = () => {
                 <li key={link.name}>
                   <Link 
                     to={link.path} 
+                    onClick={playClickSound}
                     className="group flex items-center text-slate-400 hover:text-white transition-colors duration-300"
                   >
                     <ChevronRight className="h-4 w-4 mr-2 text-brand-accent opacity-0 -ml-4 group-hover:opacity-100 group-hover:ml-0 transition-all duration-300" />
@@ -58,6 +65,7 @@ const Footer: React.FC = () => {
             <div className="space-y-4">
               <a 
                 href="mailto:the.creators.hubbb@gmail.com" 
+                onClick={playClickSound}
                 className="flex items-center text-slate-400 hover:text-brand-accent transition-colors group p-2 rounded-lg hover:bg-white/5 -ml-2"
               >
                 <div className="bg-slate-800 p-2 rounded-full mr-3 group-hover:bg-brand-accent/20 transition-colors">
@@ -71,18 +79,21 @@ const Footer: React.FC = () => {
                   href="https://www.instagram.com/tch.inn/" 
                   target="_blank" 
                   rel="noopener noreferrer" 
+                  onClick={playClickSound}
                   className="bg-slate-800 p-3 rounded-full text-slate-400 hover:text-white hover:bg-pink-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-pink-600/20"
                 >
                   <Instagram className="h-5 w-5" />
                 </a>
                 <a 
                   href="#" 
+                  onClick={(e) => { e.preventDefault(); playClickSound(); }}
                   className="bg-slate-800 p-3 rounded-full text-slate-400 hover:text-white hover:bg-blue-400 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-400/20"
                 >
                   <Twitter className="h-5 w-5" />
                 </a>
                 <a 
                   href="#" 
+                  onClick={(e) => { e.preventDefault(); playClickSound(); }}
                   className="bg-slate-800 p-3 rounded-full text-slate-400 hover:text-white hover:bg-blue-600 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-600/20"
                 >
                   <Linkedin className="h-5 w-5" />
