@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Creator's Hub</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://image2url.com/images/1764231520143-c235690c-eba8-433e-aa38-c5617d1fb7e9.png" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://the-creators-hub-tch.netlify.app/" />
+    <meta property="og:title" content="The Creator's Hub" />
+    <meta property="og:description" content="A global platform dedicated to uplifting underrated creators and artists across all domains. Together, we rise. Together, we create." />
+    <meta property="og:image" content="https://image2url.com/images/1764231520143-c235690c-eba8-433e-aa38-c5617d1fb7e9.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://the-creators-hub-tch.netlify.app/" />
+    <meta property="twitter:title" content="The Creator's Hub" />
+    <meta property="twitter:description" content="A global platform dedicated to uplifting underrated creators and artists across all domains. Together, we rise. Together, we create." />
+    <meta property="twitter:image" content="https://image2url.com/images/1764231520143-c235690c-eba8-433e-aa38-c5617d1fb7e9.png" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@400;600;700&family=Pinyon+Script&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Outfit', 'sans-serif'],
+              serif: ['Playfair Display', 'serif'],
+              script: ['Pinyon Script', 'cursive'],
+            },
+            colors: {
+              brand: {
+                dark: '#0f172a',
+                accent: '#6366f1', // Indigo 500
+                glow: '#818cf8',
+                red: '#C8102E', // Brand logo red
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      /* Custom scrollbar for webkit */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1e293b;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #475569;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #6366f1;
+      }
+      
+      /* Loading Animation */
+      .loader-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background-color: #0f172a;
+        color: #6366f1;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.9.6",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.4",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+  }
+}
+</script>
+</head>
+  <body class="bg-brand-dark text-slate-200 antialiased selection:bg-brand-accent selection:text-white">
+    <div id="root">
+      <div class="loader-container">
+        <svg class="animate-spin h-10 w-10 text-brand-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      </div>
+    </div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
