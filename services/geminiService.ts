@@ -1,11 +1,8 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-// Initialize Gemini
+// Initialize Gemini lazily
 // NOTE: In a real production app, API calls should go through a backend to protect the key.
 // For this client-side demo, we rely on the environment variable injection via Vite.
-
-// Vite replaces 'process.env.API_KEY' with the actual string during build.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const SYSTEM_INSTRUCTION = `
 You are the official AI assistant for "The Creator's Hub".
@@ -29,11 +26,25 @@ Functionality:
 Keep responses concise (under 100 words unless asked for more) and helpful.
 `;
 
+let ai: GoogleGenAI | null = null;
 let chatSession: Chat | null = null;
+
+const getAI = (): GoogleGenAI => {
+  if (!ai) {
+    // Fallback to empty string to avoid crash, but warn in console
+    const apiKey = process.env.API_KEY || ""; 
+    if (!apiKey) {
+      console.warn("Gemini API Key is missing. Chatbot will not function correctly.");
+    }
+    ai = new GoogleGenAI({ apiKey });
+  }
+  return ai;
+};
 
 export const getChatSession = (): Chat => {
   if (!chatSession) {
-    chatSession = ai.chats.create({
+    const googleAI = getAI();
+    chatSession = googleAI.chats.create({
       model: 'gemini-2.5-flash',
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
@@ -50,6 +61,6 @@ export const sendMessageToGemini = async (message: string): Promise<string> => {
     return result.text || "I'm feeling a bit quiet right now. Let's create something later!";
   } catch (error) {
     console.error("Gemini Error:", error);
-    return "I encountered a creative block (network error). Please try again.";
+    return "I encountered a creative block (network error or missing API key). Please try again later.";
   }
 };
