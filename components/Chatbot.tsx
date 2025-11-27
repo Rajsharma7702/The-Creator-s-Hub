@@ -1,13 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Loader2, Sparkles, Mail, User, CheckCircle, AlertCircle } from 'lucide-react';
-import { sendMessageToGemini } from '../services/geminiService';
+import { MessageCircle, X, Send, Loader2, Sparkles, Mail, User, CheckCircle, AlertCircle, Settings, Key } from 'lucide-react';
+import { sendMessageToGemini, setDynamicApiKey } from '../services/geminiService';
 import { ChatMessage } from '../types';
 
 const Chatbot: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationText, setNotificationText] = useState("");
-  const [view, setView] = useState<'chat' | 'contact'>('chat'); // 'chat' or 'contact'
+  const [view, setView] = useState<'chat' | 'contact' | 'settings'>('chat');
   
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -21,6 +21,10 @@ const Chatbot: React.FC = () => {
   const [isSendingContact, setIsSendingContact] = useState(false);
   const [contactStatus, setContactStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
+  // Settings State
+  const [apiKeyInput, setApiKeyInput] = useState('');
+  const [isKeySaved, setIsKeySaved] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -33,6 +37,15 @@ const Chatbot: React.FC = () => {
       scrollToBottom();
     }
   }, [messages, isOpen, view]);
+
+  // Load saved key on mount
+  useEffect(() => {
+    const savedKey = localStorage.getItem('gemini_api_key');
+    if (savedKey) {
+      setApiKeyInput(savedKey);
+      setDynamicApiKey(savedKey);
+    }
+  }, []);
 
   // Initialize audio and notification timers
   useEffect(() => {
@@ -143,7 +156,6 @@ const Chatbot: React.FC = () => {
       if (response.ok) {
         setContactStatus('success');
         setContactForm({ name: '', email: '', message: '' });
-        // Optional: switch back to chat after delay
         setTimeout(() => {
           setContactStatus('idle');
           setView('chat');
@@ -163,6 +175,22 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  // --- Settings Logic ---
+  const handleSaveKey = (e: React.FormEvent) => {
+    e.preventDefault();
+    setDynamicApiKey(apiKeyInput);
+    setIsKeySaved(true);
+    setTimeout(() => {
+      setIsKeySaved(false);
+      setView('chat');
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'model',
+        text: "API Key connected successfully! I'm now fully powered by Gemini AI."
+      }]);
+    }, 1500);
+  };
+
   return (
     <div className={`fixed z-50 flex flex-col items-end ${isOpen ? 'inset-0 sm:inset-auto sm:bottom-6 sm:right-6' : 'bottom-4 right-4 sm:bottom-6 sm:right-6'}`}>
       {/* Notification Bubble */}
@@ -175,7 +203,6 @@ const Chatbot: React.FC = () => {
             <X className="h-3 w-3 text-slate-600" />
           </button>
           <p className="text-sm font-medium leading-snug">{notificationText}</p>
-          {/* Triangle pointer */}
           <div className="absolute -bottom-2 right-0 w-0 h-0 border-l-[10px] border-l-transparent border-t-[10px] border-t-white border-r-[0px] border-r-transparent"></div>
         </div>
       )}
@@ -200,16 +227,23 @@ const Chatbot: React.FC = () => {
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-white" />
               <h3 className="font-semibold text-white">
-                {view === 'chat' ? 'Assistant' : 'Contact Team'}
+                {view === 'chat' ? 'Assistant' : view === 'contact' ? 'Contact' : 'Settings'}
               </h3>
             </div>
             <div className="flex items-center gap-1">
               <button 
-                onClick={() => setView(view === 'chat' ? 'contact' : 'chat')}
+                onClick={() => setView(view === 'settings' ? 'chat' : 'settings')}
                 className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-                title={view === 'chat' ? "Contact Team" : "Back to Chat"}
+                title="Settings"
               >
-                {view === 'chat' ? <Mail className="h-5 w-5" /> : <MessageCircle className="h-5 w-5" />}
+                <Settings className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={() => setView(view === 'contact' ? 'chat' : 'contact')}
+                className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                title="Contact Team"
+              >
+                {view === 'contact' ? <MessageCircle className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
               </button>
               <button 
                 onClick={() => setIsOpen(false)}
@@ -286,12 +320,11 @@ const Chatbot: React.FC = () => {
                     <h4 className="text-white font-semibold">Get in Touch</h4>
                     <p className="text-slate-400 text-xs mt-1">Leave a message and we'll connect via email.</p>
                  </div>
-
+                 {/* ... Form Logic ... */}
                  {contactStatus === 'success' ? (
                    <div className="flex flex-col items-center justify-center h-48 text-center space-y-3 animate-in fade-in zoom-in">
                       <CheckCircle className="h-12 w-12 text-green-400" />
                       <p className="text-white font-medium">Message Sent!</p>
-                      <p className="text-sm text-slate-400">Check your inbox soon.</p>
                    </div>
                  ) : (
                    <form onSubmit={handleContactSubmit} className="space-y-4">
@@ -301,62 +334,60 @@ const Chatbot: React.FC = () => {
                           <span>Failed to send. Please try again.</span>
                         </div>
                       )}
-
                       <div className="space-y-1">
                         <label className="text-xs text-slate-400 font-medium ml-1">Name</label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                          <input 
-                            type="text" 
-                            name="name"
-                            value={contactForm.name}
-                            onChange={handleContactChange}
-                            required
-                            className="w-full bg-slate-800 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent"
-                            placeholder="Your Name"
-                          />
-                        </div>
+                        <input type="text" name="name" value={contactForm.name} onChange={handleContactChange} required className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent" placeholder="Your Name" />
                       </div>
-
                       <div className="space-y-1">
                         <label className="text-xs text-slate-400 font-medium ml-1">Email</label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                          <input 
-                            type="email" 
-                            name="email"
-                            value={contactForm.email}
-                            onChange={handleContactChange}
-                            required
-                            className="w-full bg-slate-800 border border-white/10 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent"
-                            placeholder="your@email.com"
-                          />
-                        </div>
+                        <input type="email" name="email" value={contactForm.email} onChange={handleContactChange} required className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent" placeholder="email@example.com" />
                       </div>
-
                       <div className="space-y-1">
                         <label className="text-xs text-slate-400 font-medium ml-1">Message</label>
-                        <textarea 
-                          name="message"
-                          value={contactForm.message}
-                          onChange={handleContactChange}
-                          required
-                          rows={4}
-                          className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent resize-none"
-                          placeholder="How can we help you?"
-                        />
+                        <textarea name="message" value={contactForm.message} onChange={handleContactChange} required rows={4} className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent resize-none" placeholder="How can we help?" />
                       </div>
-
-                      <button
-                        type="submit"
-                        disabled={isSendingContact}
-                        className="w-full bg-brand-accent hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50 mt-2"
-                      >
-                        {isSendingContact ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      <button type="submit" disabled={isSendingContact} className="w-full bg-brand-accent hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg flex items-center justify-center gap-2 disabled:opacity-50 mt-2">
                         {isSendingContact ? 'Sending...' : 'Send Message'}
                       </button>
                    </form>
                  )}
+              </div>
+            )}
+
+            {/* VIEW: SETTINGS (CONNECT KEY) */}
+            {view === 'settings' && (
+              <div className="h-full overflow-y-auto p-6 animate-in slide-in-from-right-10 duration-300">
+                <div className="text-center mb-6">
+                  <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Key className="h-6 w-6 text-brand-accent" />
+                  </div>
+                  <h4 className="text-white font-semibold">Connect AI</h4>
+                  <p className="text-slate-400 text-xs mt-1">Enter your Gemini API Key to enable full AI features.</p>
+                </div>
+
+                <form onSubmit={handleSaveKey} className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-400 font-medium ml-1">Google Gemini API Key</label>
+                    <input 
+                      type="password" 
+                      value={apiKeyInput}
+                      onChange={(e) => setApiKeyInput(e.target.value)}
+                      className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-accent"
+                      placeholder="AIza..."
+                    />
+                    <p className="text-[10px] text-slate-500 leading-tight pt-1">
+                      Your key is stored locally in your browser and used only to communicate with Google.
+                    </p>
+                  </div>
+                  
+                  <button
+                    type="submit"
+                    className="w-full bg-brand-accent hover:bg-indigo-500 text-white font-medium py-2.5 rounded-lg transition-colors flex items-center justify-center gap-2"
+                  >
+                    {isKeySaved ? <CheckCircle className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
+                    {isKeySaved ? 'Connected!' : 'Save & Connect'}
+                  </button>
+                </form>
               </div>
             )}
           </div>

@@ -1,9 +1,5 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
-// Initialize Gemini lazily
-// NOTE: In a real production app, API calls should go through a backend to protect the key.
-// For this client-side demo, we rely on the environment variable injection via Vite.
-
 const SYSTEM_INSTRUCTION = `
 You are the official AI assistant for "The Creator's Hub".
 Your tone should be friendly, encouraging, artistic, and professional.
@@ -28,43 +24,100 @@ Keep responses concise (under 100 words unless asked for more) and helpful.
 
 let ai: GoogleGenAI | null = null;
 let chatSession: Chat | null = null;
+let dynamicApiKey: string | null = null;
 
-const getAI = (): GoogleGenAI => {
+// Allow setting key from UI
+export const setDynamicApiKey = (key: string) => {
+  dynamicApiKey = key;
+  // Reset instance to force recreation with new key
+  ai = null;
+  chatSession = null;
+  localStorage.setItem('gemini_api_key', key);
+};
+
+const getAI = (): GoogleGenAI | null => {
   if (!ai) {
-    // Fallback to empty string to avoid crash, but warn in console
-    // Vite replaces process.env.API_KEY with the actual string during build
-    const apiKey = process.env.API_KEY || ""; 
-    ai = new GoogleGenAI({ apiKey });
+    // Priority: 1. Dynamic/Session Key 2. LocalStorage 3. Env Var
+    const envKey = process.env.API_KEY;
+    const localKey = localStorage.getItem('gemini_api_key');
+    const finalKey = dynamicApiKey || localKey || envKey;
+
+    // If no key found in any source, return null (triggers fallback mode)
+    if (!finalKey || finalKey.length < 5) return null;
+    
+    try {
+      ai = new GoogleGenAI({ apiKey: finalKey });
+    } catch (e) {
+      console.error("Failed to init GoogleGenAI", e);
+      return null;
+    }
   }
   return ai;
 };
 
-export const getChatSession = (): Chat => {
+export const getChatSession = (): Chat | null => {
   if (!chatSession) {
     const googleAI = getAI();
-    chatSession = googleAI.chats.create({
-      model: 'gemini-2.5-flash',
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-      },
-    });
+    if (!googleAI) return null;
+
+    try {
+      chatSession = googleAI.chats.create({
+        model: 'gemini-2.5-flash',
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+        },
+      });
+    } catch (e) {
+      console.error("Failed to create chat session", e);
+      return null;
+    }
   }
   return chatSession;
 };
 
-export const sendMessageToGemini = async (message: string): Promise<string> => {
-  // CRITICAL: Check if API Key exists before attempting request
-  const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey.length < 5) {
-    return "⚠️ Configuration Error: API Key is missing.\n\nPlease go to your Netlify Dashboard > Site Settings > Environment Variables and add a variable named 'API_KEY' with your Google Gemini API key, then redeploy the site.";
+// --- OFFLINE FALLBACK LOGIC ---
+const getFallbackResponse = (message: string): string => {
+  const msg = message.toLowerCase();
+  
+  if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+    return "Hello! Welcome to The Creator's Hub. (Demo Mode: Add API Key in Settings to enable full AI)";
+  }
+  
+  if (msg.includes('submit') || msg.includes('join') || msg.includes('upload')) {
+    return "We'd love to see your work! Click 'Join Us' in the menu or visit the Submission page.";
+  }
+  
+  if (msg.includes('feature') || msg.includes('artist')) {
+    return "We feature amazing talent like Anusha (Art), Nishikant (Dance), and Aditi (Writing). Check out the Featured section!";
+  }
+  
+  if (msg.includes('contact') || msg.includes('email')) {
+    return "You can contact our team by clicking the Mail icon above.";
   }
 
+  return "I'm in Demo Mode (API Key missing). I can guide you to Submissions, Features, or Contact. To enable full AI, click the Gear icon above and enter your Google Gemini API Key.";
+};
+
+export const sendMessageToGemini = async (message: string): Promise<string> => {
+  // 1. Try to get AI instance. If it fails (no key), use fallback.
+  const aiInstance = getAI();
+  
+  if (!aiInstance) {
+    console.warn("Gemini API Key missing. Using offline fallback.");
+    await new Promise(resolve => setTimeout(resolve, 600)); 
+    return getFallbackResponse(message);
+  }
+
+  // 2. Try Real AI Request
   try {
     const chat = getChatSession();
+    if (!chat) return getFallbackResponse(message);
+
     const result: GenerateContentResponse = await chat.sendMessage({ message });
     return result.text || "I'm feeling a bit quiet right now. Let's create something later!";
   } catch (error) {
     console.error("Gemini Error:", error);
-    return "I encountered a creative block (network error or invalid API key). Please check your internet connection or verify the API key in Netlify settings.";
+    // If real API fails (quota, network, invalid key), revert to fallback
+    return getFallbackResponse(message);
   }
 };
