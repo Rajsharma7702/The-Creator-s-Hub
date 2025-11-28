@@ -13,9 +13,9 @@ const Footer: React.FC = () => {
   ];
 
   const playClickSound = () => {
-    // Using a crisp "pop" click sound
-    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3");
-    audio.volume = 0.8;
+    // Using the same bell/ding sound as the chatbot for consistency
+    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
+    audio.volume = 0.6; // Matched to chatbot volume
     audio.play().catch(err => console.error("Audio play failed", err));
   };
 
