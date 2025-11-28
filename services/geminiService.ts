@@ -35,6 +35,13 @@ export const setDynamicApiKey = (key: string) => {
   localStorage.setItem('gemini_api_key', key);
 };
 
+export const hasValidKey = (): boolean => {
+    const envKey = process.env.API_KEY;
+    const localKey = localStorage.getItem('gemini_api_key');
+    const finalKey = dynamicApiKey || localKey || envKey;
+    return !!(finalKey && finalKey.length > 5);
+};
+
 const getAI = (): GoogleGenAI | null => {
   if (!ai) {
     // Priority: 1. Dynamic/Session Key 2. LocalStorage 3. Env Var
@@ -75,27 +82,47 @@ export const getChatSession = (): Chat | null => {
   return chatSession;
 };
 
-// --- OFFLINE FALLBACK LOGIC ---
+// --- OFFLINE FALLBACK LOGIC (Rule-Based Chatbot) ---
 const getFallbackResponse = (message: string): string => {
   const msg = message.toLowerCase();
   
-  if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
-    return "Hello! Welcome to The Creator's Hub. (Demo Mode: Add API Key in Settings to enable full AI)";
-  }
-  
-  if (msg.includes('submit') || msg.includes('join') || msg.includes('upload')) {
-    return "We'd love to see your work! Click 'Join Us' in the menu or visit the Submission page.";
-  }
-  
-  if (msg.includes('feature') || msg.includes('artist')) {
-    return "We feature amazing talent like Anusha (Art), Nishikant (Dance), and Aditi (Writing). Check out the Featured section!";
-  }
-  
-  if (msg.includes('contact') || msg.includes('email')) {
-    return "You can contact our team by clicking the Mail icon above.";
+  // Greetings
+  if (msg.match(/\b(hi|hello|hey|greetings|start)\b/)) {
+    return "Hello! Welcome to The Creator's Hub. I'm here to help you navigate our platform. You can ask me about submitting your work, our featured artists, or our mission!";
   }
 
-  return "I'm in Demo Mode (API Key missing). I can guide you to Submissions, Features, or Contact. To enable full AI, click the Gear icon above and enter your Google Gemini API Key.";
+  // How are you
+  if (msg.includes('how are you')) {
+    return "I'm doing great and feeling creative! How can I assist you with your artistic journey today?";
+  }
+  
+  // Submission / Join
+  if (msg.match(/\b(submit|join|upload|form|signup|register)\b/)) {
+    return "We'd love to see your work! You can submit your art, music, or writing by clicking the 'Join Us' button in the menu, or just navigate to the Submission page.";
+  }
+  
+  // Featured / Artists
+  if (msg.match(/\b(feature|artist|creator|talent|who)\b/)) {
+    return "We feature amazing talent from all over! Check out our Featured section to see artists like Anusha (Art), Nishikant (Dance), and Aditi (Writing).";
+  }
+  
+  // Contact / Human / Email
+  if (msg.match(/\b(contact|email|human|support|team|talk)\b/)) {
+    return "You can contact our team directly by clicking the Mail (Envelope) icon at the top of this chat window. We'd love to hear from you!";
+  }
+
+  // Mission / About
+  if (msg.match(/\b(mission|vision|about|purpose|what is)\b/)) {
+    return "The Creator's Hub is a global platform dedicated to uplifting underrated creators. Our motto is 'Together, we rise. Together, we create.' We exist to give talent the stage it deserves.";
+  }
+
+  // Costs
+  if (msg.match(/\b(cost|price|free|pay)\b/)) {
+    return "Joining The Creator's Hub is completely free! We believe in accessibility for all artists.";
+  }
+
+  // Default Fallback
+  return "That's an interesting question! While I can't browse the web right now, I can help you with Submissions, Featured Creators, or Contacting the team. What would you like to explore?";
 };
 
 export const sendMessageToGemini = async (message: string): Promise<string> => {
@@ -103,8 +130,8 @@ export const sendMessageToGemini = async (message: string): Promise<string> => {
   const aiInstance = getAI();
   
   if (!aiInstance) {
-    console.warn("Gemini API Key missing. Using offline fallback.");
-    await new Promise(resolve => setTimeout(resolve, 600)); 
+    // Simulate network delay for realism
+    await new Promise(resolve => setTimeout(resolve, 800)); 
     return getFallbackResponse(message);
   }
 
@@ -116,7 +143,7 @@ export const sendMessageToGemini = async (message: string): Promise<string> => {
     const result: GenerateContentResponse = await chat.sendMessage({ message });
     return result.text || "I'm feeling a bit quiet right now. Let's create something later!";
   } catch (error) {
-    console.error("Gemini Error:", error);
+    console.warn("Gemini Connection Failed (using fallback):", error);
     // If real API fails (quota, network, invalid key), revert to fallback
     return getFallbackResponse(message);
   }

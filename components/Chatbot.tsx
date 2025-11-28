@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Loader2, Sparkles, Mail, User, CheckCircle, AlertCircle, Settings, Key } from 'lucide-react';
-import { sendMessageToGemini, setDynamicApiKey } from '../services/geminiService';
+import { MessageCircle, X, Send, Loader2, Sparkles, Mail, Settings, Key, CheckCircle, AlertCircle } from 'lucide-react';
+import { sendMessageToGemini, setDynamicApiKey, hasValidKey } from '../services/geminiService';
 import { ChatMessage } from '../types';
 
 const Chatbot: React.FC = () => {
@@ -8,6 +8,7 @@ const Chatbot: React.FC = () => {
   const [showNotification, setShowNotification] = useState(false);
   const [notificationText, setNotificationText] = useState("");
   const [view, setView] = useState<'chat' | 'contact' | 'settings'>('chat');
+  const [isAiConnected, setIsAiConnected] = useState(false);
   
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -38,44 +39,34 @@ const Chatbot: React.FC = () => {
     }
   }, [messages, isOpen, view]);
 
-  // Load saved key on mount
+  // Load saved key on mount and check connection status
   useEffect(() => {
     const savedKey = localStorage.getItem('gemini_api_key');
     if (savedKey) {
       setApiKeyInput(savedKey);
       setDynamicApiKey(savedKey);
     }
+    // Check if we have a valid key (either from env or local storage)
+    setIsAiConnected(hasValidKey());
   }, []);
 
   // Initialize audio and notification timers
   useEffect(() => {
-    // New crisp bell/ding sound
     audioRef.current = new Audio("https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3");
+    if (audioRef.current) audioRef.current.volume = 0.6; 
     
-    if (audioRef.current) {
-      audioRef.current.volume = 0.6; 
-    }
-    
-    // Timer 1: First greeting after 3 seconds
     const timer1 = setTimeout(() => {
       if (!isOpen) {
         setNotificationText("Thank you! for visiting The Creator's Hub");
         setShowNotification(true);
-        // Attempt to play sound
-        audioRef.current?.play().catch(error => {
-          console.log("Audio autoplay prevented:", error);
-        });
+        audioRef.current?.play().catch(e => console.log("Audio autoplay prevented"));
       }
     }, 3000); 
 
-    // Timer 2: Second greeting after 8 seconds (5 seconds after the first)
     const timer2 = setTimeout(() => {
       if (!isOpen) {
         setNotificationText("Hello! May I assist you?");
-        // Play sound again for the new message
-        audioRef.current?.play().catch(error => {
-          console.log("Audio autoplay prevented:", error);
-        });
+        audioRef.current?.play().catch(e => console.log("Audio autoplay prevented"));
       }
     }, 8000);
 
@@ -147,10 +138,7 @@ const Chatbot: React.FC = () => {
           _replyto: contactForm.email,
           _subject: `New Chatbot Lead: ${contactForm.name}`,
         }),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        }
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
       });
 
       if (response.ok) {
@@ -180,15 +168,16 @@ const Chatbot: React.FC = () => {
     e.preventDefault();
     setDynamicApiKey(apiKeyInput);
     setIsKeySaved(true);
+    setIsAiConnected(true);
     setTimeout(() => {
       setIsKeySaved(false);
       setView('chat');
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'model',
-        text: "API Key connected successfully! I'm now fully powered by Gemini AI."
+        text: "API Key connected! I am now fully online."
       }]);
-    }, 1500);
+    }, 1000);
   };
 
   return (
@@ -226,9 +215,22 @@ const Chatbot: React.FC = () => {
           <div className="flex items-center justify-between p-4 bg-gradient-to-r from-brand-accent to-indigo-700 shadow-md z-10 flex-shrink-0">
             <div className="flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-white" />
-              <h3 className="font-semibold text-white">
-                {view === 'chat' ? 'Assistant' : view === 'contact' ? 'Contact' : 'Settings'}
-              </h3>
+              <div className="flex flex-col">
+                <h3 className="font-semibold text-white leading-none">
+                  {view === 'chat' ? 'Assistant' : view === 'contact' ? 'Contact' : 'Settings'}
+                </h3>
+                {view === 'chat' && (
+                  <div 
+                    onClick={() => setView('settings')}
+                    className="flex items-center gap-1 mt-1 cursor-pointer group"
+                  >
+                    <div className={`w-2 h-2 rounded-full ${isAiConnected ? 'bg-green-400' : 'bg-yellow-400'}`} />
+                    <span className="text-[10px] text-white/80 group-hover:text-white group-hover:underline">
+                      {isAiConnected ? 'Online' : 'Standard Mode'}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
             <div className="flex items-center gap-1">
               <button 
@@ -295,7 +297,7 @@ const Chatbot: React.FC = () => {
                       value={inputText}
                       onChange={(e) => setInputText(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      placeholder="Ask me anything..."
+                      placeholder={isAiConnected ? "Ask me anything..." : "Ask about features or submit..."}
                       className="flex-1 bg-slate-900 text-slate-200 text-sm rounded-full px-4 py-3 border border-white/10 focus:outline-none focus:border-brand-accent focus:ring-1 focus:ring-brand-accent placeholder-slate-500"
                     />
                     <button
@@ -320,7 +322,6 @@ const Chatbot: React.FC = () => {
                     <h4 className="text-white font-semibold">Get in Touch</h4>
                     <p className="text-slate-400 text-xs mt-1">Leave a message and we'll connect via email.</p>
                  </div>
-                 {/* ... Form Logic ... */}
                  {contactStatus === 'success' ? (
                    <div className="flex flex-col items-center justify-center h-48 text-center space-y-3 animate-in fade-in zoom-in">
                       <CheckCircle className="h-12 w-12 text-green-400" />
@@ -354,7 +355,7 @@ const Chatbot: React.FC = () => {
               </div>
             )}
 
-            {/* VIEW: SETTINGS (CONNECT KEY) */}
+            {/* VIEW: SETTINGS */}
             {view === 'settings' && (
               <div className="h-full overflow-y-auto p-6 animate-in slide-in-from-right-10 duration-300">
                 <div className="text-center mb-6">
@@ -376,7 +377,7 @@ const Chatbot: React.FC = () => {
                       placeholder="AIza..."
                     />
                     <p className="text-[10px] text-slate-500 leading-tight pt-1">
-                      Your key is stored locally in your browser and used only to communicate with Google.
+                      Your key is stored locally in your browser.
                     </p>
                   </div>
                   
