@@ -7,7 +7,7 @@ Your tone should be friendly, encouraging, artistic, and professional.
 **Knowledge Base (Featured Creators):**
 We are proud to feature these incredible artists. Always mention them when asked about "featured", "previous work", "talent", or "examples":
 1. **Anusha** (Art): Renowned for her "Evil Eye" artwork series, blending traditional motifs with modern abstraction.
-2. **Nishikant** (Dance): A contemporary dancer whose viral reel captured the raw emotion of street dance.
+2. **Nishikant** (Dance): Hip-Hop Freestyle dancer.
 3. **Aditi** (Writing): A poet featured for her soul-stirring piece titled "Bekhof Soch".
 4. **Kanishka** (Art): Creates breathtaking abstract artwork with vivid imagination.
 
@@ -15,67 +15,29 @@ We are proud to feature these incredible artists. Always mention them when asked
 - To view artists: #/featured
 - To submit work: #/submit
 - To read about us: #/about
+- To contact/connect: #/contact
 - Home: #/
 
 **Instructions:**
+- If the user asks to "connect", "contact", or "talk" to an artist or the team, say: "To protect our artists' privacy, we facilitate initial connections. Please send a message via our form here: #/contact"
 - If the user asks for "previous featured work" or "examples", list the artists above and provide the link: #/featured
 - If asked to submit/join, provide the link: #/submit
-- If asked about the mission, explain we uplift underrated creators.
 - Keep responses concise (under 100 words).
 - Always be helpful and guide them to a link if possible.
 `;
 
 let ai: GoogleGenAI | null = null;
 let chatSession: Chat | null = null;
-let dynamicApiKey: string | null = null;
-
-// Helper for safe storage access (Crucial for Instagram/in-app browsers)
-const safeLocalStorage = {
-  getItem: (key: string): string | null => {
-    try {
-      return localStorage.getItem(key);
-    } catch (e) {
-      console.warn("Storage access denied");
-      return null;
-    }
-  },
-  setItem: (key: string, value: string) => {
-    try {
-      localStorage.setItem(key, value);
-    } catch (e) {
-      // ignore
-    }
-  }
-};
-
-// Allow setting key from UI
-export const setDynamicApiKey = (key: string) => {
-  dynamicApiKey = key;
-  // Reset instance to force recreation with new key
-  ai = null;
-  chatSession = null;
-  safeLocalStorage.setItem('gemini_api_key', key);
-};
-
-export const hasValidKey = (): boolean => {
-    const envKey = process.env.API_KEY;
-    const localKey = safeLocalStorage.getItem('gemini_api_key');
-    const finalKey = dynamicApiKey || localKey || envKey;
-    return !!(finalKey && finalKey.length > 5);
-};
 
 const getAI = (): GoogleGenAI | null => {
   if (!ai) {
-    // Priority: 1. Dynamic/Session Key 2. LocalStorage 3. Env Var
-    const envKey = process.env.API_KEY;
-    const localKey = safeLocalStorage.getItem('gemini_api_key');
-    const finalKey = dynamicApiKey || localKey || envKey;
-
-    // If no key found in any source, return null (triggers fallback mode)
-    if (!finalKey || finalKey.length < 5) return null;
+    const apiKey = process.env.API_KEY;
+    
+    // If no key found, return null (triggers fallback mode)
+    if (!apiKey || apiKey.length < 5) return null;
     
     try {
-      ai = new GoogleGenAI({ apiKey: finalKey });
+      ai = new GoogleGenAI({ apiKey });
     } catch (e) {
       console.error("Failed to init GoogleGenAI", e);
       return null;
@@ -139,9 +101,9 @@ const getFallbackResponse = (message: string): string => {
     return "We feature amazing talent! Check out **Anusha** (Art), **Nishikant** (Dance), **Aditi** (Poetry), and **Kanishka** (Art) on our featured page: #/featured";
   }
   
-  // Contact / Human / Email
-  if (msg.match(/\b(contact|email|human|support|team|talk)\b/)) {
-    return "You can contact our team directly by clicking the Mail (Envelope) icon at the top of this chat window.";
+  // Contact / Connect
+  if (msg.match(/\b(contact|email|human|support|team|talk|connect)\b/)) {
+    return "You can connect with us or our artists by sending a message through our form here: #/contact";
   }
 
   // Mission / About

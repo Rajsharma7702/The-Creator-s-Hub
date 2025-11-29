@@ -15,7 +15,7 @@ const creators: Creator[] = [
     category: 'Dance',
     // Reliable dynamic male dancer image
     workImage: 'https://images.unsplash.com/photo-1504609773096-104ff2c73ba4?auto=format&fit=crop&q=80&w=400',
-    description: 'A contemporary dancer whose viral reel captured the raw emotion of street dance.'
+    description: 'Hip-Hop Freestyle dancer'
   },
   {
     id: '3',

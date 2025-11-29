@@ -113,31 +113,57 @@ const Chatbot: React.FC = () => {
     const parts = text.split(/(\s+)/);
     
     return parts.map((part, index) => {
-      // Internal Hash Routes (e.g., #/featured)
-      if (part.startsWith('#/') || ['/featured', '/submit', '/about'].includes(part)) {
-         const href = part.startsWith('#') ? part : `#${part}`;
+      // Clean punctuation from end of URL/path for cleaner matching
+      // e.g., "#/contact." -> "#/contact"
+      const cleanPart = part.replace(/[.,!?)]+$/, '');
+      const trailing = part.slice(cleanPart.length);
+
+      // 1. Special Interactive Command: #/contact
+      // This switches the internal view instead of navigating
+      if (cleanPart === '#/contact' || cleanPart === '/contact') {
          return (
-           <a 
-             key={index} 
-             href={href} 
-             className="text-brand-accent hover:text-indigo-300 underline font-medium transition-colors"
-           >
-             {part.replace('#', '')}
-           </a>
+           <span key={index}>
+             <button 
+               onClick={() => setView('contact')}
+               className="text-brand-accent hover:text-indigo-300 underline font-medium transition-colors inline-block text-left"
+             >
+               Contact Form
+             </button>
+             {trailing}
+           </span>
          );
       }
-      // External URLs
-      if (part.match(/^https?:\/\//)) {
+
+      // 2. Internal Hash Routes (e.g., #/featured)
+      if (cleanPart.startsWith('#/') || ['/featured', '/submit', '/about'].includes(cleanPart)) {
+         const href = cleanPart.startsWith('#') ? cleanPart : `#${cleanPart}`;
+         return (
+           <span key={index}>
+             <a 
+               href={href} 
+               className="text-brand-accent hover:text-indigo-300 underline font-medium transition-colors"
+             >
+               {cleanPart.replace('#', '')}
+             </a>
+             {trailing}
+           </span>
+         );
+      }
+      
+      // 3. External URLs
+      if (cleanPart.match(/^https?:\/\//)) {
         return (
-          <a 
-            key={index} 
-            href={part} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="text-brand-accent hover:text-indigo-300 underline font-medium break-all"
-          >
-            {part}
-          </a>
+          <span key={index}>
+            <a 
+              href={cleanPart} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-brand-accent hover:text-indigo-300 underline font-medium break-all"
+            >
+              {cleanPart}
+            </a>
+            {trailing}
+          </span>
         );
       }
       return part;
