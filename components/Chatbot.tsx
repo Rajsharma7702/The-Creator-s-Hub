@@ -12,7 +12,7 @@ const Chatbot: React.FC = () => {
   
   // Chat State
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', role: 'model', text: "Hi! I'm the Creative Assistant. How can I help you showcase your talent today?" }
+    { id: '1', role: 'model', text: "Hi! I'm the Creative Assistant. Ask me about our featured artists or how to submit your work!" }
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -46,7 +46,7 @@ const Chatbot: React.FC = () => {
     
     const timer1 = setTimeout(() => {
       if (!isOpen) {
-        setNotificationText("Thank you! for visiting The Creator's Hub");
+        setNotificationText("Thank you for visiting The Creator's Hub!");
         setShowNotification(true);
         audioRef.current?.play().catch(e => console.log("Audio autoplay prevented"));
       }
@@ -54,7 +54,7 @@ const Chatbot: React.FC = () => {
 
     const timer2 = setTimeout(() => {
       if (!isOpen) {
-        setNotificationText("Hello! May I assist you?");
+        setNotificationText("Can I show you our Featured Artists?");
         audioRef.current?.play().catch(e => console.log("Audio autoplay prevented"));
       }
     }, 8000);
@@ -105,6 +105,43 @@ const Chatbot: React.FC = () => {
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') handleSend();
+  };
+
+  // --- Link Parsing Helper ---
+  const renderMessageText = (text: string) => {
+    // Split by spaces to find potential URLs
+    const parts = text.split(/(\s+)/);
+    
+    return parts.map((part, index) => {
+      // Internal Hash Routes (e.g., #/featured)
+      if (part.startsWith('#/') || ['/featured', '/submit', '/about'].includes(part)) {
+         const href = part.startsWith('#') ? part : `#${part}`;
+         return (
+           <a 
+             key={index} 
+             href={href} 
+             className="text-brand-accent hover:text-indigo-300 underline font-medium transition-colors"
+           >
+             {part.replace('#', '')}
+           </a>
+         );
+      }
+      // External URLs
+      if (part.match(/^https?:\/\//)) {
+        return (
+          <a 
+            key={index} 
+            href={part} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-brand-accent hover:text-indigo-300 underline font-medium break-all"
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
   };
 
   // --- Contact Form Logic ---
@@ -229,7 +266,7 @@ const Chatbot: React.FC = () => {
                             : 'bg-slate-700 text-slate-100 rounded-bl-none border border-slate-600'
                         }`}
                       >
-                        {msg.text}
+                        {renderMessageText(msg.text)}
                       </div>
                     </div>
                   ))}

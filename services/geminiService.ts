@@ -4,22 +4,25 @@ const SYSTEM_INSTRUCTION = `
 You are the official AI assistant for "The Creator's Hub".
 Your tone should be friendly, encouraging, artistic, and professional.
 
-About The Creator's Hub:
-- It is a platform dedicated to helping underrated creators and artists grow and showcase their talent globally.
-- Motto: "Together, we rise. Together, we create."
-- We support all domains: Art, Music, Dance, Writing, Entertainment, Photography, and more.
+**Knowledge Base (Featured Creators):**
+We are proud to feature these incredible artists. Always mention them when asked about "featured", "previous work", "talent", or "examples":
+1. **Anusha** (Art): Renowned for her "Evil Eye" artwork series, blending traditional motifs with modern abstraction.
+2. **Nishikant** (Dance): A contemporary dancer whose viral reel captured the raw emotion of street dance.
+3. **Aditi** (Writing): A poet featured for her soul-stirring piece titled "Bekhof Soch".
+4. **Kanishka** (Art): Creates breathtaking abstract artwork with vivid imagination.
 
-Key Sections/Features you can guide users to:
-- Featured Creators: We showcase talent like Anusha (Evil Eye artwork), Nishikant (Dance), and Aditi (Poetry).
-- Submission: Artists can submit their work via the "Join Us" or "Submit" page.
-- Mission: To uplift creators.
-- Vision: A global community of recognized talent.
+**Platform Navigation (Use these exact paths):**
+- To view artists: #/featured
+- To submit work: #/submit
+- To read about us: #/about
+- Home: #/
 
-Functionality:
-- If asked about submission, guide them to the submission form page.
-- If the user wants to speak to a human, contact the team directly, or leave a message, instruct them to click the "Envelope/Mail" icon at the top of this chat window to fill out the contact form.
-
-Keep responses concise (under 100 words unless asked for more) and helpful.
+**Instructions:**
+- If the user asks for "previous featured work" or "examples", list the artists above and provide the link: #/featured
+- If asked to submit/join, provide the link: #/submit
+- If asked about the mission, explain we uplift underrated creators.
+- Keep responses concise (under 100 words).
+- Always be helpful and guide them to a link if possible.
 `;
 
 let ai: GoogleGenAI | null = null;
@@ -101,13 +104,20 @@ export const getChatSession = (): Chat | null => {
   return chatSession;
 };
 
-// --- OFFLINE FALLBACK LOGIC (Rule-Based Chatbot) ---
+// --- ENHANCED OFFLINE FALLBACK LOGIC ---
+// Returns randomized responses to feel more natural even without AI
 const getFallbackResponse = (message: string): string => {
   const msg = message.toLowerCase();
   
+  const getRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
+
   // Greetings
   if (msg.match(/\b(hi|hello|hey|greetings|start)\b/)) {
-    return "Hello! Welcome to The Creator's Hub. I'm here to help you navigate our platform. You can ask me about submitting your work, our featured artists, or our mission!";
+    return getRandom([
+      "Hello! Welcome to The Creator's Hub. I can help you with Submissions or show you our Featured Creators.",
+      "Hi there! Ready to explore some amazing talent? Ask me about our artists or how to join.",
+      "Greetings! I'm here to guide you. Would you like to see our Featured works?"
+    ]);
   }
 
   // How are you
@@ -117,22 +127,26 @@ const getFallbackResponse = (message: string): string => {
   
   // Submission / Join
   if (msg.match(/\b(submit|join|upload|form|signup|register)\b/)) {
-    return "We'd love to see your work! You can submit your art, music, or writing by clicking the 'Join Us' button in the menu, or just navigate to the Submission page.";
+    return getRandom([
+      "We'd love to see your work! You can submit your art, music, or writing here: #/submit",
+      "Join the movement! Head over to our submission page to get started: #/submit",
+      "It's easy to join. Just fill out the form at #/submit and show us what you've got!"
+    ]);
   }
   
-  // Featured / Artists
-  if (msg.match(/\b(feature|artist|creator|talent|who)\b/)) {
-    return "We feature amazing talent from all over! Check out our Featured section to see artists like Anusha (Art), Nishikant (Dance), and Aditi (Writing).";
+  // Featured / Artists / Previous Work
+  if (msg.match(/\b(feature|artist|creator|talent|who|previous|work|example)\b/)) {
+    return "We feature amazing talent! Check out **Anusha** (Art), **Nishikant** (Dance), **Aditi** (Poetry), and **Kanishka** (Art) on our featured page: #/featured";
   }
   
   // Contact / Human / Email
   if (msg.match(/\b(contact|email|human|support|team|talk)\b/)) {
-    return "You can contact our team directly by clicking the Mail (Envelope) icon at the top of this chat window. We'd love to hear from you!";
+    return "You can contact our team directly by clicking the Mail (Envelope) icon at the top of this chat window.";
   }
 
   // Mission / About
   if (msg.match(/\b(mission|vision|about|purpose|what is)\b/)) {
-    return "The Creator's Hub is a global platform dedicated to uplifting underrated creators. Our motto is 'Together, we rise. Together, we create.' We exist to give talent the stage it deserves.";
+    return "The Creator's Hub is a global platform dedicated to uplifting underrated creators. Read our full story here: #/about";
   }
 
   // Costs
@@ -141,7 +155,11 @@ const getFallbackResponse = (message: string): string => {
   }
 
   // Default Fallback
-  return "That's an interesting question! While I can't browse the web right now, I can help you with Submissions, Featured Creators, or Contacting the team. What would you like to explore?";
+  return getRandom([
+    "That's an interesting question! I recommend checking out our Featured page to see what we do: #/featured",
+    "I'm focusing on connecting creators right now. Would you like to visit the Submission page? #/submit",
+    "I can help you explore. Try asking about 'Featured Artists' or 'How to Submit'."
+  ]);
 };
 
 export const sendMessageToGemini = async (message: string): Promise<string> => {
@@ -149,7 +167,6 @@ export const sendMessageToGemini = async (message: string): Promise<string> => {
   const aiInstance = getAI();
   
   if (!aiInstance) {
-    // Removed delay for faster response
     return getFallbackResponse(message);
   }
 
