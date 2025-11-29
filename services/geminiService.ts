@@ -26,18 +26,37 @@ let ai: GoogleGenAI | null = null;
 let chatSession: Chat | null = null;
 let dynamicApiKey: string | null = null;
 
+// Helper for safe storage access (Crucial for Instagram/in-app browsers)
+const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch (e) {
+      console.warn("Storage access denied");
+      return null;
+    }
+  },
+  setItem: (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      // ignore
+    }
+  }
+};
+
 // Allow setting key from UI
 export const setDynamicApiKey = (key: string) => {
   dynamicApiKey = key;
   // Reset instance to force recreation with new key
   ai = null;
   chatSession = null;
-  localStorage.setItem('gemini_api_key', key);
+  safeLocalStorage.setItem('gemini_api_key', key);
 };
 
 export const hasValidKey = (): boolean => {
     const envKey = process.env.API_KEY;
-    const localKey = localStorage.getItem('gemini_api_key');
+    const localKey = safeLocalStorage.getItem('gemini_api_key');
     const finalKey = dynamicApiKey || localKey || envKey;
     return !!(finalKey && finalKey.length > 5);
 };
@@ -46,7 +65,7 @@ const getAI = (): GoogleGenAI | null => {
   if (!ai) {
     // Priority: 1. Dynamic/Session Key 2. LocalStorage 3. Env Var
     const envKey = process.env.API_KEY;
-    const localKey = localStorage.getItem('gemini_api_key');
+    const localKey = safeLocalStorage.getItem('gemini_api_key');
     const finalKey = dynamicApiKey || localKey || envKey;
 
     // If no key found in any source, return null (triggers fallback mode)
@@ -130,8 +149,7 @@ export const sendMessageToGemini = async (message: string): Promise<string> => {
   const aiInstance = getAI();
   
   if (!aiInstance) {
-    // Simulate network delay for realism
-    await new Promise(resolve => setTimeout(resolve, 800)); 
+    // Removed delay for faster response
     return getFallbackResponse(message);
   }
 
