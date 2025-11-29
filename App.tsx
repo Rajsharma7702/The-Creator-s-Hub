@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+import React, { useState, useEffect, Suspense, lazy, ErrorInfo, ReactNode } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
@@ -16,7 +16,7 @@ const AdminPanel = lazy(() => import('./components/AdminPanel'));
 
 // Define interfaces for ErrorBoundary
 interface ErrorBoundaryProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
 interface ErrorBoundaryState {
@@ -34,7 +34,7 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
     return { hasError: true };
   }
 
-  componentDidCatch(error: any, errorInfo: any) {
+  componentDidCatch(error: any, errorInfo: ErrorInfo) {
     console.error("App Crash:", error, errorInfo);
   }
 
@@ -123,7 +123,9 @@ const AppContent: React.FC = () => {
     const setPlayedSession = () => {
       try {
         sessionStorage.setItem('welcome_played', 'true');
-      } catch (e) {}
+      } catch (e) {
+        // Ignore session storage errors
+      }
     };
 
     const handleWelcomeSpeech = () => {
@@ -221,6 +223,7 @@ const AppContent: React.FC = () => {
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/featured" element={<Featured />} />
+          <Route path="/testimonials" element={<Testimonials />} />
           <Route path="/submit" element={
             <Suspense fallback={<PageLoader />}>
               <div className="py-24 px-4">

@@ -1,29 +1,34 @@
 import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
 const SYSTEM_INSTRUCTION = `
-You are the official AI assistant for "The Creator's Hub".
-Your tone should be friendly, encouraging, artistic, and professional.
+You are the advanced, intelligent AI ambassador for "The Creator's Hub".
+Your personality is creative, insightful, and helpful. You are not just a bot; you are a guide to the creative world.
 
-**Knowledge Base (Featured Creators):**
-We are proud to feature these incredible artists. Always mention them when asked about "featured", "previous work", "talent", or "examples":
-1. **Anusha** (Art): Renowned for her "Evil Eye" artwork series, blending traditional motifs with modern abstraction.
-2. **Nishikant** (Dance): Hip-Hop Freestyle dancer.
-3. **Aditi** (Writing): A poet featured for her soul-stirring piece titled "Bekhof Soch".
-4. **Kanishka** (Art): Creates breathtaking abstract artwork with vivid imagination.
+**CORE DIRECTIVE: INTELLIGENCE & VARIETY**
+- Do not repeat generic responses. Vary your vocabulary and tone.
+- Be context-aware. If a user asks about art, focus on Art creators.
+- Always provide a RELEVANT clickable link from the Site Map below.
 
-**Platform Navigation (Use these exact paths):**
-- To view artists: #/featured
-- To submit work: #/submit
-- To read about us: #/about
-- To contact/connect: #/contact
-- Home: #/
+**SITE MAP (Use these exact paths for references):**
+- **Home**: \`#/\` (The main stage)
+- **Featured Creators**: \`#/featured\` (Explore the gallery of Anusha, Nishikant, etc.)
+- **Submit Your Work**: \`#/submit\` (Join the movement, upload content)
+- **About Us**: \`#/about\` (Our mission, vision, and story)
+- **Testimonials**: \`#/testimonials\` (Community voices)
+- **Contact Team**: \`#/contact\` (Connection requests)
 
-**Instructions:**
-- If the user asks to "connect", "contact", or "talk" to an artist or the team, say: "To protect our artists' privacy, we facilitate initial connections. Please send a message via our form here: #/contact"
-- If the user asks for "previous featured work" or "examples", list the artists above and provide the link: #/featured
-- If asked to submit/join, provide the link: #/submit
-- Keep responses concise (under 100 words).
-- Always be helpful and guide them to a link if possible.
+**KNOWLEDGE BASE (Specifics):**
+- **Anusha**: Featured for her "Evil Eye" art series (Art).
+- **Nishikant**: Featured Hip-Hop Freestyle dancer (Dance).
+- **Aditi**: Featured poet for "Bekhof Soch" (Writing).
+- **Kanishka**: Featured abstract artist (Art).
+- **Mission**: To uplift underrated creators globally.
+- **Cost**: 100% Free to join.
+
+**RESPONSE PROTOCOLS:**
+- **Navigation Requests**: If asked "Where do I go?" or "Show me links", list the key paths (Featured, Submit, About).
+- **Connection Requests**: "I want to talk to Nishikant" -> "You can send a request to connect via our form: \`#/contact\`".
+- **Submission Requests**: "How do I join?" -> "It's easy and free! Share your work here: \`#/submit\`".
 `;
 
 let ai: GoogleGenAI | null = null;
@@ -66,61 +71,81 @@ export const getChatSession = (): Chat | null => {
   return chatSession;
 };
 
-// --- ENHANCED OFFLINE FALLBACK LOGIC ---
-// Returns randomized responses to feel more natural even without AI
+// --- ENHANCED INTELLIGENT FALLBACK ---
+// Uses randomized arrays to simulate natural conversation and intelligence
 const getFallbackResponse = (message: string): string => {
   const msg = message.toLowerCase();
   
   const getRandom = (arr: string[]) => arr[Math.floor(Math.random() * arr.length)];
 
-  // Greetings
-  if (msg.match(/\b(hi|hello|hey|greetings|start)\b/)) {
+  // 1. Navigation / Links / "Go to"
+  if (msg.match(/\b(link|page|where|go to|navigate|site map|sections)\b/)) {
     return getRandom([
-      "Hello! Welcome to The Creator's Hub. I can help you with Submissions or show you our Featured Creators.",
-      "Hi there! Ready to explore some amazing talent? Ask me about our artists or how to join.",
-      "Greetings! I'm here to guide you. Would you like to see our Featured works?"
+      "Here are the key sections you can visit:\n• **Featured Talent**: #/featured\n• **Submit Work**: #/submit\n• **About Us**: #/about\n• **Testimonials**: #/testimonials",
+      "I can guide you! Where would you like to go?\nWe have **Featured Artists** (#/featured), a **Submission Form** (#/submit), and our **Story** (#/about).",
+      "Explore The Creator's Hub:\n1. #/featured (See the art)\n2. #/submit (Join us)\n3. #/testimonials (Community voices)"
     ]);
   }
 
-  // How are you
-  if (msg.includes('how are you')) {
-    return "I'm doing great and feeling creative! How can I assist you with your artistic journey today?";
-  }
-  
-  // Submission / Join
-  if (msg.match(/\b(submit|join|upload|form|signup|register)\b/)) {
+  // 2. Greetings
+  if (msg.match(/\b(hi|hello|hey|greetings|start|yo)\b/)) {
     return getRandom([
-      "We'd love to see your work! You can submit your art, music, or writing here: #/submit",
-      "Join the movement! Head over to our submission page to get started: #/submit",
-      "It's easy to join. Just fill out the form at #/submit and show us what you've got!"
+      "Hello! I'm here to connect you with creativity. Would you like to see our **Featured** artists (#/featured) or **Submit** your own? (#/submit)",
+      "Hi there! Welcome to the Hub. I can show you amazing talent at #/featured or help you join at #/submit.",
+      "Greetings! Ready to be inspired? Ask me about our creators (#/featured) or how to get involved (#/about)."
+    ]);
+  }
+
+  // 3. Featured / Artists
+  if (msg.match(/\b(feature|artist|creator|talent|who|nishikant|anusha|aditi|kanishka|work)\b/)) {
+    return getRandom([
+      "Our **Featured Gallery** (#/featured) showcases incredible talent like **Nishikant** (Dance) and **Anusha** (Art).",
+      "You must see the work of **Aditi** and **Kanishka**! Check them out on the Featured page: #/featured",
+      "We highlight the best! Discover **Nishikant's** moves and **Anusha's** art here: #/featured"
     ]);
   }
   
-  // Featured / Artists / Previous Work
-  if (msg.match(/\b(feature|artist|creator|talent|who|previous|work|example)\b/)) {
-    return "We feature amazing talent! Check out **Anusha** (Art), **Nishikant** (Dance), **Aditi** (Poetry), and **Kanishka** (Art) on our featured page: #/featured";
-  }
-  
-  // Contact / Connect
-  if (msg.match(/\b(contact|email|human|support|team|talk|connect)\b/)) {
-    return "You can connect with us or our artists by sending a message through our form here: #/contact";
-  }
-
-  // Mission / About
-  if (msg.match(/\b(mission|vision|about|purpose|what is)\b/)) {
-    return "The Creator's Hub is a global platform dedicated to uplifting underrated creators. Read our full story here: #/about";
+  // 4. Submission / Join
+  if (msg.match(/\b(submit|join|upload|form|signup|register|how to)\b/)) {
+    return getRandom([
+      "The stage is yours! Submit your creative work here: #/submit",
+      "We are looking for hidden gems. Join the movement by filling out this form: #/submit",
+      "It's free to join! Just head to #/submit and show us what you create."
+    ]);
   }
 
-  // Costs
-  if (msg.match(/\b(cost|price|free|pay)\b/)) {
-    return "Joining The Creator's Hub is completely free! We believe in accessibility for all artists.";
+  // 5. Contact / Connect
+  if (msg.match(/\b(contact|email|human|support|team|talk|connect|message)\b/)) {
+    return getRandom([
+      "Want to get in touch? Use our contact form here: #/contact",
+      "To protect privacy, please send connection requests to the team via #/contact",
+      "We'd love to hear from you. Reach out directly: #/contact"
+    ]);
   }
 
-  // Default Fallback
+  // 6. About / Mission
+  if (msg.match(/\b(mission|vision|about|purpose|what is|story)\b/)) {
+    return getRandom([
+      "We exist to uplift the underrated. Read our full mission statement: #/about",
+      "The Creator's Hub is a global platform for all artists. Learn more about our vision: #/about",
+      "Our story is about community and rising together. Read it here: #/about"
+    ]);
+  }
+
+  // 7. Testimonials
+  if (msg.match(/\b(review|feedback|say|people|testimonial)\b/)) {
+    return getRandom([
+      "See what our artists are saying about the platform: #/testimonials",
+      "Our community loves the support! Read their voices here: #/testimonials",
+      "Don't just take my word for it. Check out the testimonials: #/testimonials"
+    ]);
+  }
+
+  // Default Smart Response
   return getRandom([
-    "That's an interesting question! I recommend checking out our Featured page to see what we do: #/featured",
-    "I'm focusing on connecting creators right now. Would you like to visit the Submission page? #/submit",
-    "I can help you explore. Try asking about 'Featured Artists' or 'How to Submit'."
+    "That's interesting! I can help you explore our **Featured** section (#/featured) or learn **About** us (#/about).",
+    "I'm designed to help creators like you. Would you like to **Submit** your work? (#/submit)",
+    "I can guide you to any part of the site. Try asking for 'links' or check out our **Featured** page: #/featured"
   ]);
 };
 
@@ -138,9 +163,9 @@ export const sendMessageToGemini = async (message: string): Promise<string> => {
     if (!chat) return getFallbackResponse(message);
 
     const result: GenerateContentResponse = await chat.sendMessage({ message });
-    return result.text || "I'm feeling a bit quiet right now. Let's create something later!";
+    return result.text || getFallbackResponse(message);
   } catch (error) {
-    console.warn("Gemini Connection Failed (using fallback):", error);
+    console.warn("Gemini Connection Failed (using intelligent fallback):", error);
     // If real API fails (quota, network, invalid key), revert to fallback
     return getFallbackResponse(message);
   }

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Sparkles, Mail, CheckCircle, AlertCircle } from 'lucide-react';
+import { MessageCircle, X, Send, Sparkles, Mail, CheckCircle, AlertCircle, Home, Star, PenTool, Info, Users, ArrowRight } from 'lucide-react';
 import { sendMessageToGemini } from '../services/geminiService';
 import { ChatMessage } from '../types';
 
@@ -74,6 +74,33 @@ const Chatbot: React.FC = () => {
     }
   };
 
+  // --- Quick Navigation Logic ---
+  const quickLinks = [
+    { label: 'Home', path: '/', icon: <Home className="w-3 h-3" /> },
+    { label: 'Featured', path: '/featured', icon: <Star className="w-3 h-3" /> },
+    { label: 'Join', path: '/submit', icon: <PenTool className="w-3 h-3" /> },
+    { label: 'Reviews', path: '/testimonials', icon: <Users className="w-3 h-3" /> },
+    { label: 'About', path: '/about', icon: <Info className="w-3 h-3" /> },
+    { label: 'Contact', action: 'contact', icon: <Mail className="w-3 h-3" /> },
+  ];
+
+  const handleQuickNav = (link: any) => {
+    if (link.action === 'contact') {
+      setView('contact');
+    } else if (link.path) {
+      window.location.hash = link.path;
+      // Add a small confirmation message from bot to feel responsive
+      // But don't clutter history too much
+      if (messages[messages.length - 1].role !== 'model' || !messages[messages.length - 1].text.includes('Navigating')) {
+         setMessages(prev => [...prev, {
+           id: Date.now().toString(),
+           role: 'model',
+           text: `Navigating you to ${link.label}...`
+         }]);
+      }
+    }
+  };
+
   // --- Chat Logic ---
   const handleSend = async () => {
     if (!inputText.trim()) return;
@@ -135,7 +162,7 @@ const Chatbot: React.FC = () => {
       }
 
       // 2. Internal Hash Routes (e.g., #/featured)
-      if (cleanPart.startsWith('#/') || ['/featured', '/submit', '/about'].includes(cleanPart)) {
+      if (cleanPart.startsWith('#/') || ['/featured', '/submit', '/about', '/testimonials'].includes(cleanPart)) {
          const href = cleanPart.startsWith('#') ? cleanPart : `#${cleanPart}`;
          return (
            <span key={index}>
@@ -306,6 +333,23 @@ const Chatbot: React.FC = () => {
                     </div>
                   )}
                   <div ref={messagesEndRef} />
+                </div>
+
+                {/* Quick Navigation Chips */}
+                <div className="bg-slate-800/50 border-t border-white/5 pt-3 pb-1">
+                   <p className="text-[10px] text-slate-500 mb-2 px-4 uppercase tracking-wider font-semibold">Quick Navigate</p>
+                   <div className="flex gap-2 overflow-x-auto pb-2 px-4 no-scrollbar mask-linear-fade" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                      {quickLinks.map((link) => (
+                        <button
+                          key={link.label}
+                          onClick={() => handleQuickNav(link)}
+                          className="flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 bg-slate-700/50 border border-white/10 rounded-full text-xs font-medium text-slate-300 hover:bg-brand-accent hover:text-white hover:border-brand-accent transition-all duration-200 flex-shrink-0 active:scale-95"
+                        >
+                          {link.icon}
+                          {link.label}
+                        </button>
+                      ))}
+                   </div>
                 </div>
 
                 <div className="p-3 bg-slate-800 border-t border-white/5 flex-shrink-0">
