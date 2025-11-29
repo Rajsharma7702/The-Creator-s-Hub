@@ -52,28 +52,48 @@ const App: React.FC = () => {
 
   // Log version for debugging deployment
   useEffect(() => {
-    console.log("The Creator's Hub - Version 2.1 (Netlify Build Fix)");
+    console.log("The Creator's Hub - Version 2.2 (Mobile Voice Fix)");
   }, []);
 
   // AI Welcome Message Logic
   useEffect(() => {
-    const handleWelcomeSpeech = () => {
-      // Check if we've already welcomed the user in this session
-      if (sessionStorage.getItem('welcome_played')) return;
+    // Flag to prevent double execution
+    let hasPlayed = false;
 
-      // Create the utterance
+    const handleWelcomeSpeech = () => {
+      if (hasPlayed || sessionStorage.getItem('welcome_played')) {
+        cleanupListeners();
+        return;
+      }
+
+      // CRITICAL MOBILE FIX:
+      // Mobile browsers often get 'stuck' if speech was interrupted or not reset.
+      // Calling cancel() ensures a fresh state for the synthesizer.
+      window.speechSynthesis.cancel();
+
       const text = "Welcome to The Creator's Hub";
       const utterance = new SpeechSynthesisUtterance(text);
       
       // Configuration for a pleasant AI voice
+      // Note: Mobile browsers might ignore rate/pitch, but we set them anyway.
       utterance.volume = 1;
-      utterance.rate = 0.9; // Slightly slower for clarity
+      utterance.rate = 1.0; // Standard speed is safer for mobile compatibility
       utterance.pitch = 1;
       
-      // Attempt to set a high-quality voice if available (async)
+      // Attempt to set a high-quality voice
       const voices = window.speechSynthesis.getVoices();
-      // Try to find a standard English voice
-      const preferredVoice = voices.find(v => v.lang === 'en-US' && !v.name.includes('Microsoft David'));
+      
+      // Priority: 
+      // 1. Google US English (Android high quality)
+      // 2. Samantha (iOS high quality)
+      // 3. Any English US voice
+      // 4. Default
+      const preferredVoice = voices.find(v => 
+        v.name.includes('Google US English') || 
+        v.name.includes('Samantha') || 
+        (v.lang === 'en-US' && !v.name.includes('Microsoft David'))
+      );
+
       if (preferredVoice) {
         utterance.voice = preferredVoice;
       }
@@ -81,23 +101,33 @@ const App: React.FC = () => {
       // Speak
       window.speechSynthesis.speak(utterance);
       
-      // Mark as played
+      // Mark as played locally and in session
+      hasPlayed = true;
       sessionStorage.setItem('welcome_played', 'true');
       
-      // Clean up listeners
+      // Clean up listeners immediately to prevent double triggers
       cleanupListeners();
     };
 
     const cleanupListeners = () => {
-      ['click', 'touchstart', 'keydown'].forEach(event => 
-        window.removeEventListener(event, handleWelcomeSpeech)
+      ['click', 'touchstart', 'scroll', 'keydown'].forEach(event => 
+        document.removeEventListener(event, handleWelcomeSpeech)
       );
     };
 
-    // Browsers often block autoplaying audio. We attach the welcome sound 
-    // to the first user interaction to ensure it plays successfully.
-    ['click', 'touchstart', 'keydown'].forEach(event => 
-      window.addEventListener(event, handleWelcomeSpeech, { once: true })
+    // Pre-load voices (Android Chrome sometimes needs this kickstart)
+    window.speechSynthesis.getVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = () => {
+        // Just trigger a get to ensure they populate
+        window.speechSynthesis.getVoices();
+      };
+    }
+
+    // Attach listeners to DOCUMENT for better capture on mobile
+    // 'scroll' is added because sometimes users scroll before tapping
+    ['click', 'touchstart', 'scroll', 'keydown'].forEach(event => 
+      document.addEventListener(event, handleWelcomeSpeech, { once: true, passive: true })
     );
 
     return () => cleanupListeners();
